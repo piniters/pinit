@@ -43,7 +43,7 @@ public class MemoController {
     public ResponseEntity<List<MemoResponseDto>> getNarrowMemos(
             @RequestParam("latitude") Double latitude,
             @RequestParam("longitude") Double longitude,
-            @RequestParam(value = "distance", defaultValue = "3.0") Double distance) { // 기본값 3km
+            @RequestParam(value = "distance", defaultValue = "1.0") Double distance) { // 기본값 1km
 
         List<MemoResponseDto> memoList = memoService.getNarrowMemos(latitude, longitude, distance);
         return ResponseEntity.ok(memoList);
