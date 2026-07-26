@@ -8,9 +8,10 @@ public class MemoRequestDto {
     private String content;   // 메모 내용
     private Double latitude;  // 위도
     private Double longitude; // 경도
-    private String visibility;
+    private String roadAddress;   // 도로명 주소
+    private String jibunAddress;  // 지번 주소
+    private String placeName;     // 장소/건물명
+    private String visibility;    // 공개 여부 (PUBLIC / PRIVATE 등)
+    private Long questionId;
 
-    //public String getContent() { return content; }
-    //public Double getLatitude() { return latitude; }
-    //public Double getLongitude() { return longitude; }
 }

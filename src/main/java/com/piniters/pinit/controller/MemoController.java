@@ -5,6 +5,7 @@ import com.piniters.pinit.dto.MemoResponseDto;
 import com.piniters.pinit.service.MemoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,12 +18,16 @@ public class MemoController {
     private final MemoService memoService;
 
     @PostMapping
-    public ResponseEntity<String> createMemo(@RequestBody MemoRequestDto requestDto) {
+    public ResponseEntity<Long> createMemo(@AuthenticationPrincipal Long userId, // 시큐리티 필터가 넣어준 유저 PK(ID)를 자동 추출
+                                             @RequestBody MemoRequestDto requestDto
+    ) {
 
+        if (userId == null) {
+            return ResponseEntity.status(401).build(); // Unauthorized
+        }
 
-        Long savedMemoId = memoService.createMemo(requestDto);
-
-        return ResponseEntity.ok("메모가 성공적으로 저장되었습니다. ID: " + savedMemoId);
+        Long memoId = memoService.createMemo(userId, requestDto);
+        return ResponseEntity.ok(memoId);
     }
 
     // GET 요청 : 메모 리스트 조회

@@ -17,7 +17,7 @@ public class Memo {
     private Long memoId; // 쪽지ID (BIGINT)
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id") // DB상 컬럼명
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(name = "question_id")

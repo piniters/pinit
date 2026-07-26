@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.piniters.pinit.dto.MemoRequestDto;
 import com.piniters.pinit.dto.MemoResponseDto;
 import com.piniters.pinit.entity.Memo;
+import com.piniters.pinit.entity.User;
 import com.piniters.pinit.repository.MemoRepository;
+import com.piniters.pinit.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
 public class MemoService {
 
     private final MemoRepository memoRepository;
+    private final UserRepository userRepository;
 
     // application.yml에 적어둔 카카오 키
     @Value("${kakao.api.key}")
@@ -147,5 +150,32 @@ public class MemoService {
         // 필요에 따라 위도/경도나 주소도 수정 가능
 
         return memo.getMemoId();
+    }
+
+
+    // 메모 생성 메서드 (유저 ID를 함께 받아서 저장)
+    @Transactional
+    public Long createMemo(Long userId, MemoRequestDto requestDto) {
+
+        // 1. 토큰에서 꺼낸 유저 ID로 DB에서 유저 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+
+        // 2. Memo 엔티티 생성 및 유저 세팅
+        Memo memo = new Memo();
+        memo.setUser(user);
+        memo.setContent(requestDto.getContent());
+        memo.setLatitude(requestDto.getLatitude());
+        memo.setLongitude(requestDto.getLongitude());
+        memo.setRoadAddress(requestDto.getRoadAddress());
+        memo.setJibunAddress(requestDto.getJibunAddress());
+        memo.setPlaceName(requestDto.getPlaceName());
+        memo.setVisibility(requestDto.getVisibility());
+        memo.setQuestionId(requestDto.getQuestionId());
+        memo.setCreatedAt(LocalDateTime.now());
+
+        // 3. 저장
+        Memo savedMemo = memoRepository.save(memo);
+        return savedMemo.getMemoId();
     }
 }
