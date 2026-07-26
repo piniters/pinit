@@ -11,7 +11,6 @@ import java.util.List;
 @Getter
 @Setter
 @Table(name = "user")
-
 public class User {
 
     @Id
@@ -19,19 +18,19 @@ public class User {
     @Column(name = "user_id")
     private Long userId; // 사용자ID
 
-    @Column(name = "social_id", length = 255)
+    @Column(name = "social_id", nullable = false, length = 255)
     private String socialId; // OAuth식별값
 
-    @Column(length = 20)
+    @Column(nullable = false, length = 20)
     private String provider; // 로그인플랫폼
 
-    @Column(length = 10)
+    @Column(nullable = false, unique = true, length = 10)
     private String nickname; // 닉네임
 
     @Column(name = "profile_image_url", length = 500)
     private String profileImageUrl; // 프로필
 
-    @Column(length = 20)
+    @Column(nullable = false, length = 20)
     private String status; // 상태
 
     @Column(name = "created_at")
