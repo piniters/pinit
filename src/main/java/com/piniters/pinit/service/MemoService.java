@@ -108,4 +108,12 @@ public class MemoService {
                 .map(MemoResponseDto::new)
                 .collect(Collectors.toList());
     }
+
+    // 사용자의 현재 위도, 경도와 반경을 받아 주변 메모만 DTO로 변환
+    @Transactional(readOnly = true)
+    public List<MemoResponseDto> getNarrowMemos(Double latitude, Double longitude, Double distance) {
+        return memoRepository.findMemosWithinDistance(latitude, longitude, distance).stream()
+                .map(MemoResponseDto::new)
+                .collect(Collectors.toList());
+    }
 }

@@ -32,4 +32,15 @@ public class MemoController {
 
         return ResponseEntity.ok(memoList);
     }
+
+    // 주변 반경 내 메모 조회(GET)
+   @GetMapping("/nearby")
+    public ResponseEntity<List<MemoResponseDto>> getNarrowMemos(
+            @RequestParam("latitude") Double latitude,
+            @RequestParam("longitude") Double longitude,
+            @RequestParam(value = "distance", defaultValue = "3.0") Double distance) { // 기본값 3km
+
+        List<MemoResponseDto> memoList = memoService.getNarrowMemos(latitude, longitude, distance);
+        return ResponseEntity.ok(memoList);
+    }
 }
