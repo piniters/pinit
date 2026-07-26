@@ -58,18 +58,39 @@ public class MemoController {
 
     // DELETE 요청: 특정 메모 삭제
     @DeleteMapping("/{memoId}")
-    public ResponseEntity<String> deleteMemo(@PathVariable("memoId") Long memoId) {
-        memoService.deleteMemo(memoId);
-        return ResponseEntity.ok("메모가 성공적으로 삭제되었습니다. (memoId: " + memoId + ")");
+    public ResponseEntity<String> deleteMemo(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable("memoId") Long memoId) {
+        if (userId == null) return ResponseEntity.status(401).build();
+
+        memoService.deleteMemo(userId, memoId);
+        return ResponseEntity.ok("메모가 성공적으로 삭제되었습니다.");
     }
 
     // PUT 요청: 특정 메모 수정
     @PutMapping("/{memoId}")
     public ResponseEntity<Long> updateMemo(
+            @AuthenticationPrincipal Long userId,
             @PathVariable("memoId") Long memoId,
             @RequestBody MemoRequestDto requestDto) {
 
-        Long updatedMemoId = memoService.updateMemo(memoId, requestDto);
+        // 비로그인 사용자 차단
+        if (userId == null) {
+            return ResponseEntity.status(401).build(); // Unauthorized
+        }
+
+        Long updatedMemoId = memoService.updateMemo(userId, memoId, requestDto);
         return ResponseEntity.ok(updatedMemoId);
     }
+
+
+    // GET 요청: 내 메모 목록 조회
+    @GetMapping("/my")
+    public ResponseEntity<List<MemoResponseDto>> getMyMemos(@AuthenticationPrincipal Long userId) {
+        if (userId == null) return ResponseEntity.status(401).build();
+
+        List<MemoResponseDto> myMemos = memoService.getMyMemos(userId);
+        return ResponseEntity.ok(myMemos);
+    }
+
 }

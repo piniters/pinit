@@ -38,30 +38,6 @@ public class MemoService {
         public String jibunAddress;
     }
 
-    @Transactional // DB에 데이터를 저장/수정할 때 안전하게 처리해주는 어노테이션
-    public Long createMemo(MemoRequestDto requestDto) {
-
-        Memo memo = new Memo();
-        memo.setContent(requestDto.getContent());
-        memo.setLatitude(requestDto.getLatitude());
-        memo.setLongitude(requestDto.getLongitude());
-        memo.setVisibility(requestDto.getVisibility());
-        memo.setCreatedAt(LocalDateTime.now());
-
-        AddressInfo addressInfo = getAddressFromKakao(requestDto.getLatitude(), requestDto.getLongitude());
-
-        memo.setRoadAddress(addressInfo.roadAddress);
-        memo.setJibunAddress(addressInfo.jibunAddress);
-
-        //user 연관관계 매핑이나 questionId 설정 등은 지금은 임시로 생략
-        // 하드코딩해둬도 됨 (나중에 로그인 기능 붙일 때 처리)
-
-        // DB에 저장
-        Memo savedMemo = memoRepository.save(memo);
-
-        return savedMemo.getMemoId(); // 저장된 메모의 ID 반환
-    }
-
 
     // 카카오 서버와 통신하는 메서드
     private AddressInfo getAddressFromKakao(Double latitude, Double longitude) {
@@ -131,24 +107,28 @@ public class MemoService {
 
     // 특정 ID의 메모 삭제
     @Transactional
-    public void deleteMemo(Long memoId) {
+    public void deleteMemo(Long userId, Long memoId) {
         Memo memo = memoRepository.findById(memoId)
                 .orElseThrow(() -> new IllegalArgumentException("삭제할 메모가 존재하지 않습니다. memoId = " + memoId));
 
+        if (memo.getUser() == null || !memo.getUser().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("작성자 본인만 삭제할 수 있습니다.");
+        }
         memoRepository.delete(memo);
     }
 
     // 특정 ID의 메모 수정
     @Transactional
-    public Long updateMemo(Long memoId, MemoRequestDto requestDto) {
+    public Long updateMemo(Long userId, Long memoId, MemoRequestDto requestDto) {
         Memo memo = memoRepository.findById(memoId)
                 .orElseThrow(() -> new IllegalArgumentException("수정할 메모가 존재하지 않습니다. memoId = " + memoId));
 
-        // 엔티티의 값만 변경하면 트랜잭션 종료 시점에 자동으로 DB에 업데이트
+        if (memo.getUser() == null || !memo.getUser().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("작성자 본인만 수정할 수 있습니다.");
+        }
+
         memo.setContent(requestDto.getContent());
         memo.setVisibility(requestDto.getVisibility());
-        // 필요에 따라 위도/경도나 주소도 수정 가능
-
         return memo.getMemoId();
     }
 
@@ -157,25 +137,34 @@ public class MemoService {
     @Transactional
     public Long createMemo(Long userId, MemoRequestDto requestDto) {
 
-        // 1. 토큰에서 꺼낸 유저 ID로 DB에서 유저 조회
+        // 1. 유저 검증
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
-        // 2. Memo 엔티티 생성 및 유저 세팅
+        // 2. 카카오 API 연동 (위/경도로 주소 추출)
+        AddressInfo addressInfo = getAddressFromKakao(requestDto.getLatitude(), requestDto.getLongitude());
+
+        // 3. 엔티티 생성 및 값 세팅 (유저 정보 + 카카오 주소 통합)
         Memo memo = new Memo();
         memo.setUser(user);
         memo.setContent(requestDto.getContent());
         memo.setLatitude(requestDto.getLatitude());
         memo.setLongitude(requestDto.getLongitude());
-        memo.setRoadAddress(requestDto.getRoadAddress());
-        memo.setJibunAddress(requestDto.getJibunAddress());
+        memo.setRoadAddress(addressInfo.roadAddress);
+        memo.setJibunAddress(addressInfo.jibunAddress);
         memo.setPlaceName(requestDto.getPlaceName());
         memo.setVisibility(requestDto.getVisibility());
         memo.setQuestionId(requestDto.getQuestionId());
         memo.setCreatedAt(LocalDateTime.now());
 
-        // 3. 저장
         Memo savedMemo = memoRepository.save(memo);
         return savedMemo.getMemoId();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MemoResponseDto> getMyMemos(Long userId) {
+        return memoRepository.findByUser_UserIdOrderByCreatedAtDesc(userId).stream()
+                .map(MemoResponseDto::new)
+                .collect(Collectors.toList());
     }
 }
