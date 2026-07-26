@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 @Setter
 public class MemoResponseDto {
     private Long memoId;
+    private Long userId;
+    private String nickname;
     private String content;
     private Double latitude;
     private Double longitude;
@@ -20,6 +22,11 @@ public class MemoResponseDto {
 
     public MemoResponseDto(Memo memo) {
         this.memoId = memo.getMemoId();
+
+        if (memo.getUser() != null) {
+            this.userId = memo.getUser().getUserId();
+            this.nickname = memo.getUser().getNickname();
+        }
         this.content = memo.getContent();
         this.latitude = memo.getLatitude();
         this.longitude = memo.getLongitude();
