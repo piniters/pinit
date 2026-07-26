@@ -16,3 +16,8 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
+
+
+kakao:
+  api:
+    key: 163cb77d1236f9b3d661a9a00b3c2d2a

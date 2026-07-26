@@ -31,7 +31,7 @@ public class Comment {
     private LocalDateTime createdAt; // 작성일시
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt; // 삭제일시(소프트딜리트용)
+    private LocalDateTime deletedAt; // 삭제일시
 
     @Column(name = "parent_id")
     private Long parentId; // 부모댓글ID (대댓글 구현용)
