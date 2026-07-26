@@ -134,4 +134,18 @@ public class MemoService {
 
         memoRepository.delete(memo);
     }
+
+    // 특정 ID의 메모 수정
+    @Transactional
+    public Long updateMemo(Long memoId, MemoRequestDto requestDto) {
+        Memo memo = memoRepository.findById(memoId)
+                .orElseThrow(() -> new IllegalArgumentException("수정할 메모가 존재하지 않습니다. memoId = " + memoId));
+
+        // 엔티티의 값만 변경하면 트랜잭션 종료 시점에 자동으로 DB에 업데이트
+        memo.setContent(requestDto.getContent());
+        memo.setVisibility(requestDto.getVisibility());
+        // 필요에 따라 위도/경도나 주소도 수정 가능
+
+        return memo.getMemoId();
+    }
 }

@@ -57,4 +57,14 @@ public class MemoController {
         memoService.deleteMemo(memoId);
         return ResponseEntity.ok("메모가 성공적으로 삭제되었습니다. (memoId: " + memoId + ")");
     }
+
+    // PUT 요청: 특정 메모 수정
+    @PutMapping("/{memoId}")
+    public ResponseEntity<Long> updateMemo(
+            @PathVariable("memoId") Long memoId,
+            @RequestBody MemoRequestDto requestDto) {
+
+        Long updatedMemoId = memoService.updateMemo(memoId, requestDto);
+        return ResponseEntity.ok(updatedMemoId);
+    }
 }
