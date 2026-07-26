@@ -116,4 +116,13 @@ public class MemoService {
                 .map(MemoResponseDto::new)
                 .collect(Collectors.toList());
     }
+
+    // 특정 ID의 메모 상세 조회
+    @Transactional(readOnly = true)
+    public MemoResponseDto getMemoById(Long memoId) {
+        Memo memo = memoRepository.findById(memoId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 메모가 존재하지 않습니다. memoId = " + memoId));
+
+        return new MemoResponseDto(memo);
+    }
 }

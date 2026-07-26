@@ -33,7 +33,7 @@ public class MemoController {
         return ResponseEntity.ok(memoList);
     }
 
-    // 주변 반경 내 메모 조회(GET)
+    // GET 요청 : 주변 반경 내 메모 조회
    @GetMapping("/nearby")
     public ResponseEntity<List<MemoResponseDto>> getNarrowMemos(
             @RequestParam("latitude") Double latitude,
@@ -42,5 +42,12 @@ public class MemoController {
 
         List<MemoResponseDto> memoList = memoService.getNarrowMemos(latitude, longitude, distance);
         return ResponseEntity.ok(memoList);
+    }
+
+    // GET 요청: 특정 메모 상세 조회
+    @GetMapping("/{memoId}")
+    public ResponseEntity<MemoResponseDto> getMemoById(@PathVariable("memoId") Long memoId) {
+        MemoResponseDto memoResponseDto = memoService.getMemoById(memoId);
+        return ResponseEntity.ok(memoResponseDto);
     }
 }
