@@ -25,7 +25,7 @@ public class MemoController {
         return ResponseEntity.ok("메모가 성공적으로 저장되었습니다. ID: " + savedMemoId);
     }
 
-
+    // GET 요청 : 메모 리스트 조회
     @GetMapping
     public ResponseEntity<List<MemoResponseDto>> getAllMemos() {
         List<MemoResponseDto> memoList = memoService.getAllMemos();
@@ -49,5 +49,12 @@ public class MemoController {
     public ResponseEntity<MemoResponseDto> getMemoById(@PathVariable("memoId") Long memoId) {
         MemoResponseDto memoResponseDto = memoService.getMemoById(memoId);
         return ResponseEntity.ok(memoResponseDto);
+    }
+
+    // DELETE 요청: 특정 메모 삭제
+    @DeleteMapping("/{memoId}")
+    public ResponseEntity<String> deleteMemo(@PathVariable("memoId") Long memoId) {
+        memoService.deleteMemo(memoId);
+        return ResponseEntity.ok("메모가 성공적으로 삭제되었습니다. (memoId: " + memoId + ")");
     }
 }

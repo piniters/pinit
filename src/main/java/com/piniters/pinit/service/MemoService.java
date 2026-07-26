@@ -125,4 +125,13 @@ public class MemoService {
 
         return new MemoResponseDto(memo);
     }
+
+    // 특정 ID의 메모 삭제
+    @Transactional
+    public void deleteMemo(Long memoId) {
+        Memo memo = memoRepository.findById(memoId)
+                .orElseThrow(() -> new IllegalArgumentException("삭제할 메모가 존재하지 않습니다. memoId = " + memoId));
+
+        memoRepository.delete(memo);
+    }
 }
