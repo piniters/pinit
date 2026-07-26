@@ -3,6 +3,7 @@ package com.piniters.pinit.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.piniters.pinit.dto.MemoRequestDto;
+import com.piniters.pinit.dto.MemoResponseDto;
 import com.piniters.pinit.entity.Memo;
 import com.piniters.pinit.repository.MemoRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -96,5 +99,13 @@ public class MemoService {
         }
 
         return result;
+    }
+
+    // 저장된 모든 메모를 최신순으로 가져와서 DTO로 변환
+    @Transactional(readOnly = true) // 읽기 전용
+    public List<MemoResponseDto> getAllMemos() {
+        return memoRepository.findAllByOrderByCreatedAtDesc().stream()
+                .map(MemoResponseDto::new)
+                .collect(Collectors.toList());
     }
 }
