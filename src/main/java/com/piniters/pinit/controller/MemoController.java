@@ -3,6 +3,7 @@ package com.piniters.pinit.controller;
 import com.piniters.pinit.dto.MemoRequestDto;
 import com.piniters.pinit.dto.MemoResponseDto;
 import com.piniters.pinit.service.MemoService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -106,6 +107,44 @@ public class MemoController {
 
         String resultMessage = memoService.toggleLike(userId, memoId);
         return ResponseEntity.ok(resultMessage);
+    }
+
+    // POST 요청: 특정 메모에 댓글 작성
+    @PostMapping("/{memoId}/comments")
+    public ResponseEntity<String> createComment(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable("memoId") Long memoId,
+            @Valid @RequestBody com.piniters.pinit.dto.CommentRequestDto requestDto) { // import 에러 방지를 위해 패키지 경로 전체 명시
+
+        if (userId == null) {
+            return ResponseEntity.status(401).build(); // 비로그인 차단
+        }
+
+        Long commentId = memoService.createComment(userId, memoId, requestDto);
+
+        String responseMessage = "댓글이 성공적으로 작성되었습니다. (생성된 댓글 ID: " + commentId + ")";
+        return ResponseEntity.ok(responseMessage);
+    }
+
+    // GET 요청: 특정 메모의 댓글 목록 조회
+    @GetMapping("/{memoId}/comments")
+    public ResponseEntity<List<com.piniters.pinit.dto.CommentResponseDto>> getComments(@PathVariable("memoId") Long memoId) {
+        List<com.piniters.pinit.dto.CommentResponseDto> comments = memoService.getCommentsByMemo(memoId);
+        return ResponseEntity.ok(comments);
+    }
+
+    // DELETE 요청: 특정 댓글 삭제
+    @DeleteMapping("/{memoId}/comments/{commentId}")
+    public ResponseEntity<String> deleteComment(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable("commentId") Long commentId) {
+
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        memoService.deleteComment(userId, commentId);
+        return ResponseEntity.ok("댓글이 성공적으로 삭제되었습니다.");
     }
 
 }

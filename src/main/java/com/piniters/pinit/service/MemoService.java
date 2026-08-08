@@ -2,14 +2,18 @@ package com.piniters.pinit.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.piniters.pinit.dto.CommentRequestDto;
+import com.piniters.pinit.dto.CommentResponseDto;
 import com.piniters.pinit.dto.MemoRequestDto;
 import com.piniters.pinit.dto.MemoResponseDto;
+import com.piniters.pinit.entity.Comment;
 import com.piniters.pinit.entity.Likes;
 import com.piniters.pinit.entity.Memo;
 import com.piniters.pinit.entity.User;
 import com.piniters.pinit.repository.LikesRepository;
 import com.piniters.pinit.repository.MemoRepository;
 import com.piniters.pinit.repository.UserRepository;
+import com.piniters.pinit.repository.CommentRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -32,6 +36,7 @@ public class MemoService {
     private final MemoRepository memoRepository;
     private final UserRepository userRepository;
     private final LikesRepository likesRepository;
+    private final CommentRepository commentRepository;
 
     // application.yml에 적어둔 카카오 키
     @Value("${kakao.api.key}")
@@ -165,6 +170,7 @@ public class MemoService {
         return savedMemo.getMemoId();
     }
 
+    //내 메모 보기
     @Transactional(readOnly = true)
     public List<MemoResponseDto> getMyMemos(Long userId) {
         return memoRepository.findByUser_UserIdOrderByCreatedAtDesc(userId).stream()
@@ -209,4 +215,85 @@ public class MemoService {
             return "좋아요가 추가되었습니다.";
         }
     }
+
+    //댓글 달기
+    @Transactional
+    public Long createComment(Long userId, Long memoId, CommentRequestDto requestDto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+        Memo memo = memoRepository.findById(memoId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 메모입니다."));
+
+        if (requestDto.getParentId() != null) {
+            // 1. 부모 댓글이 실제로 DB에 존재하는지, 삭제되지는 않았는지 확인
+            Comment parentComment = commentRepository.findById(requestDto.getParentId())
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않거나 삭제된 부모 댓글입니다."));
+
+            if (parentComment.getDeletedAt() != null) {
+                throw new IllegalArgumentException("삭제된 댓글에는 대댓글을 달 수 없습니다.");
+            }
+
+            // 2. 부모 댓글이 지금 작성하려는 '같은 메모'에 속해 있는지 무결성 검증
+            if (!parentComment.getMemo().getMemoId().equals(memoId)) {
+                throw new IllegalArgumentException("부모 댓글의 메모 주소가 일치하지 않습니다.");
+            }
+
+            // 3. 대댓글에 또 대댓글을 다는 것 방지 (1 Depth 제한)
+            if (parentComment.getParentId() != null) {
+                throw new IllegalArgumentException("대댓글의 대댓글은 작성할 수 없습니다.");
+            }
+        }
+
+
+        // 1. 댓글 엔티티 생성 및 값 세팅
+        Comment comment = new Comment();
+        comment.setUser(user);
+        comment.setMemo(memo);
+        comment.setContent(requestDto.getContent());
+        comment.setParentId(requestDto.getParentId()); // 대댓글 지원
+        comment.setCreatedAt(LocalDateTime.now());
+        // deletedAt은 처음 생성 시 null 상태
+
+        commentRepository.save(comment);
+
+        // 2. 메모의 댓글 수(comment_count) +1 증가
+        int currentCount = (memo.getCommentCount() != null) ? memo.getCommentCount() : 0;
+        memo.setCommentCount(currentCount + 1);
+
+        return comment.getCommentId();
+    }
+
+    //댓글 가져오기
+    @Transactional(readOnly = true)
+    public List<CommentResponseDto> getCommentsByMemo(Long memoId) {
+        // 삭제되지 않은 댓글만 가져오게 설정
+        return commentRepository.findByMemo_MemoIdAndDeletedAtIsNullOrderByCreatedAtAsc(memoId).stream()
+                .map(CommentResponseDto::new)
+                .collect(Collectors.toList());
+    }
+
+    // 댓글 삭제
+    @Transactional
+    public void deleteComment(Long userId, Long commentId) {
+
+        // 1. 대상 댓글 조회
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+
+        // 2. 작성자 본인인지 검증
+        if (comment.getUser() == null || !comment.getUser().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("작성자 본인만 댓글을 삭제할 수 있습니다.");
+        }
+
+        // 3. 물리적 삭제(commentRepository.delete) 대신 논리적 삭제(UPDATE) 실행
+        // JPA의 Dirty Checking 기능으로 인해 이 한 줄만으로 UPDATE 쿼리가 데이터베이스로 날아갑니다.
+        comment.setDeletedAt(LocalDateTime.now());
+
+        // 4. 데이터 무결성 방어: 댓글이 삭제되었으니 메모의 총 댓글 수(comment_count) 1 감소
+        Memo memo = comment.getMemo();
+        int currentCount = (memo.getCommentCount() != null) ? memo.getCommentCount() : 0;
+        memo.setCommentCount(Math.max(0, currentCount - 1)); // 음수 방어
+    }
+
+
 }

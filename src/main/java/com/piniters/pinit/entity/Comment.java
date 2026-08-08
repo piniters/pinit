@@ -17,11 +17,11 @@ public class Comment {
     private Long commentId; // 댓글ID
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user; // 작성자
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "memo_id")
+    @JoinColumn(name = "memo_id", nullable = false)
     private Memo memo; // 대상 메모
 
     @Column(nullable = false, length = 255)
