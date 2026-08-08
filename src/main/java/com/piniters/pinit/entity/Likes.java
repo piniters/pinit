@@ -19,11 +19,11 @@ public class Likes {
     private Long likeId; // 좋아요ID
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user; // 좋아요 누른 유저
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "memo_id")
+    @JoinColumn(name = "memo_id", nullable = false)
     private Memo memo; // 대상 메모
 
     @Column(name = "created_at")

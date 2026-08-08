@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.piniters.pinit.dto.MemoRequestDto;
 import com.piniters.pinit.dto.MemoResponseDto;
+import com.piniters.pinit.entity.Likes;
 import com.piniters.pinit.entity.Memo;
 import com.piniters.pinit.entity.User;
+import com.piniters.pinit.repository.LikesRepository;
 import com.piniters.pinit.repository.MemoRepository;
 import com.piniters.pinit.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +22,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +31,7 @@ public class MemoService {
 
     private final MemoRepository memoRepository;
     private final UserRepository userRepository;
+    private final LikesRepository likesRepository;
 
     // application.yml에 적어둔 카카오 키
     @Value("${kakao.api.key}")
@@ -166,5 +170,43 @@ public class MemoService {
         return memoRepository.findByUser_UserIdOrderByCreatedAtDesc(userId).stream()
                 .map(MemoResponseDto::new)
                 .collect(Collectors.toList());
+    }
+
+    // 특정 메모에 좋아요 추가/취소
+    @Transactional
+    public String toggleLike(Long userId, Long memoId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+        Memo memo = memoRepository.findById(memoId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 메모입니다."));
+
+        // 유저와 메모 정보를 바탕으로 기존 좋아요 기록이 있는지 조회
+        Optional<Likes> existingLike = likesRepository.findByUserAndMemo(user, memo);
+
+        // 과거 데이터의 likeCount가 null일 경우 0으로 초기화
+        int currentCount = (memo.getLikeCount() != null) ? memo.getLikeCount() : 0;
+
+        if (existingLike.isPresent()) {
+            // 이미 기록이 있다면 -> 좋아요 삭제
+            likesRepository.delete(existingLike.get());
+
+            // 메모의 좋아요 수 감소
+            memo.setLikeCount(Math.max(0, currentCount - 1));
+
+            return "좋아요가 취소되었습니다.";
+        } else {
+            // 기록이 없다면 -> 좋아요 생성
+            Likes newLike = new Likes();
+            newLike.setUser(user);
+            newLike.setMemo(memo);
+            newLike.setCreatedAt(LocalDateTime.now());
+
+            likesRepository.save(newLike);
+
+            // 메모의 좋아요 수 증가
+            memo.setLikeCount(currentCount + 1);
+
+            return "좋아요가 추가되었습니다.";
+        }
     }
 }

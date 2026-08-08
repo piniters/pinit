@@ -93,4 +93,19 @@ public class MemoController {
         return ResponseEntity.ok(myMemos);
     }
 
+    // POST 요청: 특정 메모 좋아요 추가 및 취소
+    @PostMapping("/{memoId}/likes")
+    public ResponseEntity<String> toggleLike(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable("memoId") Long memoId) {
+
+        // 비로그인 사용자 방어막
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String resultMessage = memoService.toggleLike(userId, memoId);
+        return ResponseEntity.ok(resultMessage);
+    }
+
 }
