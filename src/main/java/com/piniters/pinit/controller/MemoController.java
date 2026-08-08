@@ -147,4 +147,30 @@ public class MemoController {
         return ResponseEntity.ok("댓글이 성공적으로 삭제되었습니다.");
     }
 
+
+    // POST 요청: 특정 메모 스크랩 추가/취소 (토글)
+    @PostMapping("/{memoId}/scraps")
+    public ResponseEntity<String> toggleScrap(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable("memoId") Long memoId) {
+
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String resultMessage = memoService.toggleScrap(userId, memoId);
+        return ResponseEntity.ok(resultMessage);
+    }
+
+    // GET 요청: 내가 스크랩한 메모 목록 조회
+    @GetMapping("/scraps/my")
+    public ResponseEntity<List<MemoResponseDto>> getMyScraps(@AuthenticationPrincipal Long userId) {
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        List<MemoResponseDto> scrapList = memoService.getMyScraps(userId);
+        return ResponseEntity.ok(scrapList);
+    }
+
 }

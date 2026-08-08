@@ -6,14 +6,8 @@ import com.piniters.pinit.dto.CommentRequestDto;
 import com.piniters.pinit.dto.CommentResponseDto;
 import com.piniters.pinit.dto.MemoRequestDto;
 import com.piniters.pinit.dto.MemoResponseDto;
-import com.piniters.pinit.entity.Comment;
-import com.piniters.pinit.entity.Likes;
-import com.piniters.pinit.entity.Memo;
-import com.piniters.pinit.entity.User;
-import com.piniters.pinit.repository.LikesRepository;
-import com.piniters.pinit.repository.MemoRepository;
-import com.piniters.pinit.repository.UserRepository;
-import com.piniters.pinit.repository.CommentRepository;
+import com.piniters.pinit.entity.*;
+import com.piniters.pinit.repository.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -37,6 +31,7 @@ public class MemoService {
     private final UserRepository userRepository;
     private final LikesRepository likesRepository;
     private final CommentRepository commentRepository;
+    private final ScrapsRepository scrapsRepository;
 
     // application.yml에 적어둔 카카오 키
     @Value("${kakao.api.key}")
@@ -293,6 +288,42 @@ public class MemoService {
         Memo memo = comment.getMemo();
         int currentCount = (memo.getCommentCount() != null) ? memo.getCommentCount() : 0;
         memo.setCommentCount(Math.max(0, currentCount - 1)); // 음수 방어
+    }
+
+
+
+     //특정 메모 스크랩 토글 (추가 / 취소)
+    @Transactional
+    public String toggleScrap(Long userId, Long memoId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+        Memo memo = memoRepository.findById(memoId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 메모입니다."));
+
+        Optional<Scraps> existingScrap = scrapsRepository.findByUserAndMemo(user, memo);
+
+        if (existingScrap.isPresent()) {
+            // 이미 스크랩되어 있다면 -> 취소
+            scrapsRepository.delete(existingScrap.get());
+            return "스크랩이 취소되었습니다.";
+        } else {
+            // 스크랩되어 있지 않다면 -> 추가
+            Scraps scrap = new Scraps();
+            scrap.setUser(user);
+            scrap.setMemo(memo);
+            scrap.setCreatedAt(LocalDateTime.now());
+            scrapsRepository.save(scrap);
+            return "스크랩에 성공했습니다.";
+        }
+    }
+
+
+     // 내가 스크랩한 메모 목록 조회
+    @Transactional(readOnly = true)
+    public List<MemoResponseDto> getMyScraps(Long userId) {
+        return scrapsRepository.findScrappedMemosByUserId(userId).stream()
+                .map(MemoResponseDto::new)
+                .collect(Collectors.toList());
     }
 
 
