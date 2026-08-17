@@ -24,7 +24,9 @@ public class MemoController {
     ) {
 
         if (userId == null) {
-            return ResponseEntity.status(401).build(); // Unauthorized
+            //테스트 목적, userId = 1로 설정
+            userId = 1L;
+            //return ResponseEntity.status(401).build(); // Unauthorized
         }
 
         Long memoId = memoService.createMemo(userId, requestDto);
@@ -62,8 +64,12 @@ public class MemoController {
     public ResponseEntity<String> deleteMemo(
             @AuthenticationPrincipal Long userId,
             @PathVariable("memoId") Long memoId) {
-        if (userId == null) return ResponseEntity.status(401).build();
 
+        if (userId == null) {
+            //테스트 목적, userId = 1로 설정
+            userId = 1L;
+            //return ResponseEntity.status(401).build(); // Unauthorized
+        }
         memoService.deleteMemo(userId, memoId);
         return ResponseEntity.ok("메모가 성공적으로 삭제되었습니다.");
     }
@@ -75,9 +81,10 @@ public class MemoController {
             @PathVariable("memoId") Long memoId,
             @RequestBody MemoRequestDto requestDto) {
 
-        // 비로그인 사용자 차단
         if (userId == null) {
-            return ResponseEntity.status(401).build(); // Unauthorized
+            //테스트 목적, userId = 1로 설정
+            userId = 1L;
+            //return ResponseEntity.status(401).build(); // Unauthorized
         }
 
         Long updatedMemoId = memoService.updateMemo(userId, memoId, requestDto);
@@ -88,7 +95,11 @@ public class MemoController {
     // GET 요청: 내 메모 목록 조회
     @GetMapping("/my")
     public ResponseEntity<List<MemoResponseDto>> getMyMemos(@AuthenticationPrincipal Long userId) {
-        if (userId == null) return ResponseEntity.status(401).build();
+        if (userId == null) {
+            //테스트 목적, userId = 1로 설정
+            userId = 1L;
+            //return ResponseEntity.status(401).build(); // Unauthorized
+        }
 
         List<MemoResponseDto> myMemos = memoService.getMyMemos(userId);
         return ResponseEntity.ok(myMemos);
@@ -140,7 +151,9 @@ public class MemoController {
             @PathVariable("commentId") Long commentId) {
 
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            //테스트 목적, userId = 1로 설정
+            userId = 1L;
+            //return ResponseEntity.status(401).build(); // Unauthorized
         }
 
         memoService.deleteComment(userId, commentId);
@@ -155,7 +168,9 @@ public class MemoController {
             @PathVariable("memoId") Long memoId) {
 
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            //테스트 목적, userId = 1로 설정
+            userId = 1L;
+            //return ResponseEntity.status(401).build(); // Unauthorized
         }
 
         String resultMessage = memoService.toggleScrap(userId, memoId);
@@ -166,7 +181,9 @@ public class MemoController {
     @GetMapping("/scraps/my")
     public ResponseEntity<List<MemoResponseDto>> getMyScraps(@AuthenticationPrincipal Long userId) {
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            //테스트 목적, userId = 1로 설정
+            userId = 1L;
+            //return ResponseEntity.status(401).build(); // Unauthorized
         }
 
         List<MemoResponseDto> scrapList = memoService.getMyScraps(userId);
