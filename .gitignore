@@ -37,3 +37,6 @@ out/
 .vscode/
 
 src/main/resources/application.yml
+
+# Firebase Service Account Key
+pinit-2aa22-firebase-adminsdk-fbsvc-d430d22bac.json

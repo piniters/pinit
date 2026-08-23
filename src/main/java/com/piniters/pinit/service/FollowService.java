@@ -17,6 +17,7 @@ public class FollowService {
 
     private final FollowsRepository followsRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public String toggleFollow(Long followerId, Long followingId) {
@@ -45,6 +46,15 @@ public class FollowService {
             newFollow.setCreatedAt(LocalDateTime.now()); // 엔티티에 맞춰 생성 시간 수동 주입
 
             followsRepository.save(newFollow);
+
+            notificationService.sendNotification(
+                    following,                              // 받는 사람 (팔로우 당한 상대방)
+                    follower,                               // 보내는 사람 (팔로우를 누른 사람)
+                    "FOLLOW",                               // 알림 타입
+                    follower.getNickname() + "님이 회원님을 팔로우하기 시작했습니다.", // 알림 내용
+                    follower.getUserId()                    // 이 알림을 클릭했을 때 이동할 타겟의 ID (팔로우한 사람의 유저 ID)
+            );
+
             return "팔로우 되었습니다.";
         }
     }

@@ -4,6 +4,7 @@ import com.piniters.pinit.entity.Question;
 import com.piniters.pinit.entity.User;
 import com.piniters.pinit.repository.QuestionRepository;
 import com.piniters.pinit.repository.UserRepository;
+import com.piniters.pinit.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,6 +21,7 @@ public class DailyQuestionScheduler {
 
     private final UserRepository userRepository;
     private final QuestionRepository questionRepository;
+    private final NotificationService notificationService;
 
     @Scheduled(cron = "0 0 9 * * ?")
     //@Scheduled(cron = "0 * * * * ?") //테스트용
@@ -36,13 +38,22 @@ public class DailyQuestionScheduler {
             return;
         }
 
-        String todayQuestion = randomQuestionOpt.get().getContent();
+        Question question = randomQuestionOpt.get();
+        String todayQuestion = question.getContent();
 
         // state가 ACTIVE인 모든 유저 조회
         List<User> activeUsers = userRepository.findByStatus("ACTIVE");
 
-        // 전체 유저를 돌면서 알림 생성 로직 수행
+        // 전체 유저를 돌면서 알림 공통 서비스 호출 (DB 저장 + FCM 전송)
         for (User user : activeUsers) {
+            notificationService.sendNotification(
+                    user,                               // receiver (받는 사람)
+                    null,                               // sender (시스템 발송이므로 null)
+                    "DAILY_QUESTION",                   // 알림 타입
+                    todayQuestion,                      // 알림 내용
+                    question.getId()            // 연관된 질문 ID
+            );
+
             log.info("유저 ID [{}]에게 데일리 질문 발송 완료: {}", user.getUserId(), todayQuestion);
         }
 

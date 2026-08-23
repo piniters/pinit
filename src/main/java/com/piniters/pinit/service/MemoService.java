@@ -32,6 +32,7 @@ public class MemoService {
     private final LikesRepository likesRepository;
     private final CommentRepository commentRepository;
     private final ScrapsRepository scrapsRepository;
+    private final NotificationService notificationService;
 
     // application.yml에 적어둔 카카오 키
     @Value("${kakao.api.key}")
@@ -207,6 +208,21 @@ public class MemoService {
             // 메모의 좋아요 수 증가
             memo.setLikeCount(currentCount + 1);
 
+            // memo 작성자 가져오기
+            User memoOwner = memo.getUser();
+
+            // 자기 자신의 메모에 좋아요를 누른 경우라면 알림을 안보냄
+            if (!memoOwner.getUserId().equals(user.getUserId())) {
+                notificationService.sendNotification(
+                        memoOwner,                                          // 받는 사람 (메모 주인)
+                        user,                                               // 보내는 사람 (좋아요를 누른 사람)
+                        "LIKE",                                             // 알림 타입
+                        user.getNickname() + "님이 회원님의 메모를 좋아합니다.", // 내용
+                        memo.getMemoId()                                       //  이 알림을 클릭했을 때 이동할 타겟의 ID
+                );
+            }
+
+
             return "좋아요가 추가되었습니다.";
         }
     }
@@ -254,6 +270,18 @@ public class MemoService {
         // 2. 메모의 댓글 수(comment_count) +1 증가
         int currentCount = (memo.getCommentCount() != null) ? memo.getCommentCount() : 0;
         memo.setCommentCount(currentCount + 1);
+
+
+        User memoOwner = memo.getUser();
+
+        // 댓글 저장 로직 이후에 호출
+        notificationService.sendNotification(
+                memoOwner,                              // 받는 사람 (메모 주인)
+                user,                                   // 보내는 사람 (댓글을 단 사람)
+                "COMMENT",                              // 알림 타입
+                user.getNickname() + "님이 회원님의 메모에 댓글을 남겼습니다.", // 내용
+                memo.getMemoId()                         // 연관 ID (댓글이 달린 메모 ID)
+        );
 
         return comment.getCommentId();
     }
