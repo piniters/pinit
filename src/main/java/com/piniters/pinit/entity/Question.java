@@ -2,12 +2,14 @@ package com.piniters.pinit.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor
 @Table(name = "question")
 public class Question {
 
@@ -16,7 +18,7 @@ public class Question {
     @Column(name = "id")
     private Long id; // 질문번호
 
-    @Column(name = "content", length = 255)
+    @Column(name = "content", nullable = false, length = 500)
     private String content; // 질문내용
 
     @Column(name = "is_active")
