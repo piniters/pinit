@@ -24,6 +24,12 @@ public class NotificationService {
      */
     @Transactional
     public void sendNotification(User receiver, User sender, String type, String message, Long relatedId) {
+
+        // 0. 자기 자신에게는 알림을 보내지 않음 (예: 본인 메모에 본인이 댓글 단 경우)
+        if (receiver.getUserId().equals(sender.getUserId())) {
+            return;
+        }
+
         // 1. DB에 알림 저장 (인앱 알림함용)
         Notification notification = new Notification();
         notification.setReceiver(receiver);
@@ -35,8 +41,7 @@ public class NotificationService {
 
         notificationRepository.save(notification);
 
-        // 2. 실제 스마트폰으로 FCM 푸시 알림 전송
-        // String fcmToken = receiver.getFcmToken();
-        // fcmService.sendMessage(fcmToken, "Pinit 알림", message);
+        // 2. 실제 스마트폰으로 FCM 푸시 알림 전송 (1:N 다중 기기 일괄 발송)
+        fcmService.sendNotificationToUser(receiver.getUserId(), "Pinit 알림", message);
     }
 }
