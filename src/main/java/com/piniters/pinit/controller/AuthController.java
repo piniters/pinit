@@ -16,13 +16,12 @@ public class AuthController {
     // 편의상 간단한 Record나 DTO 클래스를 내부 정의하거나 RequestBody로 받음
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequestDto requestDto) {
-        String token = authService.loginOrSignUp(
-                requestDto.getSocialId(),
+        // 프론트엔드가 주는 accessToken을 Service로 넘김
+        String token = authService.socialLogin(
                 requestDto.getProvider(),
-                requestDto.getNickname()
+                requestDto.getAccessToken()
         );
 
-        // 발급된 JWT 토큰을 응답으로 리턴
         return ResponseEntity.ok(token);
     }
 
@@ -30,8 +29,7 @@ public class AuthController {
     @lombok.Getter
     @lombok.Setter
     public static class LoginRequestDto {
-        private String socialId;
-        private String provider;
-        private String nickname;
+        private String provider;    // "KAKAO" 또는 "GOOGLE"
+        private String accessToken; // 프론트엔드가 소셜 로그인 후 받아온 토큰
     }
 }
